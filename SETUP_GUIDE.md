@@ -71,16 +71,35 @@ Edit the `tsconfig.app.json` file:
 ```json
 {
   "compilerOptions": {
-    // ...other settings...
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     }
-    // ...other settings...
-  }
+  },
+  "include": ["src"]
 }
+
 ```
 
 ## 4. Configure Vite
@@ -88,6 +107,9 @@ Edit the `tsconfig.app.json` file:
 ```bash
 # Install required Node.js type definitions
 npm install -D @types/node
+
+# Install Vite plugin
+npm install @vitejs/plugin-react
 ```
 
 Update your `vite.config.ts`:
@@ -719,6 +741,7 @@ Update `src/App.tsx`:
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import Home from './pages/Home';
+import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ResetPassword from './pages/ResetPassword';
@@ -741,14 +764,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <Routes>
-      <Route path="/" element={
-        <ProtectedRoute>
-          <Home />
-        </ProtectedRoute>
-      } />
+      <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      {/* TODO: Remove this test route before deployment - use for testing dashboard without authentication */}
+      <Route path="/testdashboard" element={<Dashboard />} />
     </Routes>
   );
 }
@@ -760,7 +782,7 @@ export default App;
 
 Update `src/main.tsx`:
 
-```typescript
+```typitten
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -778,6 +800,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 );
 ```
+
+## 15. Create a Health Dashboard CRUD with Cursor!
+
+Press CMD + I
+Select Agent mode
+Select Claude 3.7
+input the prompt below:
+> Can we make the dashboard page a simple crud application. this entire project is an instructional tool.
+> make it health themed, and can be a chart, add a logout button. make it fully functional with supabase
 
 ## Running the Project
 
