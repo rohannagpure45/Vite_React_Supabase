@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/Vite_React_Supabase/',
+  base: '/',
   plugins: [react()],
   build: {
     target: 'esnext',
