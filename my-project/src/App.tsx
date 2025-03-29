@@ -16,6 +16,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return children;
 }
 
+
 function App() {
   return (
     <div className="min-h-screen bg-white">
