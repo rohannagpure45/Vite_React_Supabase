@@ -1,25 +1,60 @@
-import { HealthKitService } from '@carekit/apple';
-import { cardinalKitConfig } from '../config/cardinalKit';
+export const loadCareKit = async () => {
+  if (import.meta.env.VITE_ENABLE_HEALTHKIT === 'true') {
+    try {
+      const careKitPath = '@carekit/apple';
+      const careKitModule = await import(careKitPath);
+      return careKitModule;
+    } catch (error) {
+      console.error('CareKit not available:', error);
+      return null;
+    }
+  }
+  return null;
+};
 
 interface BiometricData {
   heartRate?: number;
   bloodOxygen?: number;
   ecg?: {
-    status: 'normal' | 'abnormal' | 'unavailable';
+    data: number[];
     timestamp: string;
   };
 }
 
-class HealthKitManager {
+export class HealthKitManager {
   private static instance: HealthKitManager;
+  private careKit: any;
 
-  private constructor() {}
+  private constructor() {
+    this.careKit = null;
+  }
 
   public static getInstance(): HealthKitManager {
     if (!HealthKitManager.instance) {
       HealthKitManager.instance = new HealthKitManager();
     }
     return HealthKitManager.instance;
+  }
+
+  public async initialize(): Promise<void> {
+    if (!this.careKit) {
+      const module = await loadCareKit();
+      if (module) {
+        this.careKit = module;
+      }
+    }
+  }
+
+  public async getBiometricData(): Promise<BiometricData> {
+    if (!this.careKit) {
+      throw new Error('HealthKit not initialized');
+    }
+
+    return {
+      heartRate: await this.careKit.getHeartRate(),
+      bloodOxygen: await this.careKit.getBloodOxygen(),
+      ecg: await this.careKit.getECGData()
+    };
   }
 
   // Mock HealthKit authorization
@@ -35,7 +70,7 @@ class HealthKitManager {
       heartRate: Math.floor(Math.random() * (100 - 60) + 60), // Random heart rate between 60-100
       bloodOxygen: Math.floor(Math.random() * (100 - 95) + 95), // Random blood oxygen between 95-100
       ecg: {
-        status: 'normal',
+        data: [],
         timestamp: new Date().toISOString()
       }
     };
@@ -54,7 +89,7 @@ class HealthKitManager {
   // Mock ECG data
   async getECGData(startDate: Date, endDate: Date) {
     return {
-      status: 'normal',
+      data: [],
       timestamp: new Date().toISOString()
     };
   }
@@ -66,4 +101,4 @@ class HealthKitManager {
   }
 }
 
-export const healthKitManager = HealthKitManager.getInstance(); 
+export const healthKitManager = HealthKitManager.getInstance();

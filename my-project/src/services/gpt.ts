@@ -1,4 +1,12 @@
-import OpenAI from 'openai';
+// Only import OpenAI if the API key is available
+let OpenAI: any;
+try {
+  if (import.meta.env.VITE_OPENAI_API_KEY) {
+    OpenAI = (await import('openai')).default;
+  }
+} catch (error) {
+  console.warn('OpenAI module not available:', error);
+}
 
 interface BiometricData {
   heartRate?: number;
@@ -12,13 +20,16 @@ interface Symptom {
   duration: string;
 }
 
-class GPTHealthService {
+export class GPTHealthService {
   private static instance: GPTHealthService;
-  private openai: OpenAI;
+  private openai: any;
 
   private constructor() {
+    if (!OpenAI) {
+      throw new Error('OpenAI is not available. Please check your environment variables.');
+    }
     this.openai = new OpenAI({
-      apiKey: import.meta.env.VITE_OPENAI_API_KEY
+      apiKey: import.meta.env.VITE_OPENAI_API_KEY,
     });
   }
 
