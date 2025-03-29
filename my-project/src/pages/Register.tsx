@@ -1,16 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -18,23 +8,32 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess(false);
     
     if (password !== confirmPassword) {
       return setError('Passwords do not match');
+    }
+    
+    if (password.length < 6) {
+      return setError('Password must be at least 6 characters long');
     }
     
     setLoading(true);
     
     try {
       await signUp(email, password);
-      navigate('/login');
-      // You might want to add a success message here
+      setSuccess(true);
+      // Wait a moment to show the success message before redirecting
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
     } catch (error: any) {
       setError(error.message || 'Failed to sign up');
     } finally {
@@ -43,62 +42,67 @@ export default function Register() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-svh bg-gray-100">
-      <Card className="w-[350px]">
-        <CardHeader>
-          <CardTitle>Register</CardTitle>
-          <CardDescription>Create a new account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">Email</label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                required
-              />
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <h1 className="text-2xl font-bold mb-6 text-center">Register</h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm Password"
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
+          {error && (
+            <div className="p-3 text-sm text-red-500 bg-red-50 rounded border border-red-200">
+              {error}
             </div>
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">Password</label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                required
-              />
+          )}
+          {success && (
+            <div className="p-3 text-sm text-green-500 bg-green-50 rounded border border-green-200">
+              Registration successful! Redirecting to login...
             </div>
-            <div className="space-y-2">
-              <label htmlFor="confirm-password" className="text-sm font-medium">Confirm Password</label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm Password"
-                required
-              />
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating account...' : 'Register'}
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="flex justify-center">
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:opacity-50"
+          >
+            {loading ? 'Creating account...' : 'Register'}
+          </button>
+        </form>
+        <div className="mt-4 text-center">
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
             <Link to="/login" className="text-blue-600 hover:underline">
               Login
             </Link>
           </p>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

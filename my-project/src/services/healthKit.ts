@@ -1,29 +1,33 @@
+export interface BiometricData {
+  steps: number;
+  heartRate: number;
+  // Add more biometric data fields as needed
+}
+
 export const loadCareKit = async () => {
   if (import.meta.env.VITE_ENABLE_HEALTHKIT === 'true') {
     try {
-      const careKitPath = '@carekit/apple';
-      const careKitModule = await import(careKitPath);
-      return careKitModule;
+      // Temporarily mock CareKit for web compatibility
+      console.warn('CareKit is not available on web, returning mock.');
+      return {
+        getHeartRate: async () => 75,
+        getBloodOxygen: async () => 98,
+        getECGData: async () => ({
+          data: [],
+          timestamp: new Date().toISOString()
+        })
+      };
     } catch (error) {
-      console.error('CareKit not available:', error);
+      console.error('CareKit mock failed:', error);
       return null;
     }
   }
   return null;
 };
 
-interface BiometricData {
-  heartRate?: number;
-  bloodOxygen?: number;
-  ecg?: {
-    data: number[];
-    timestamp: string;
-  };
-}
-
 export class HealthKitManager {
   private static instance: HealthKitManager;
-  private careKit: any;
+  private careKit: any = null;
 
   private constructor() {
     this.careKit = null;
@@ -37,24 +41,28 @@ export class HealthKitManager {
   }
 
   public async initialize(): Promise<void> {
-    if (!this.careKit) {
-      const module = await loadCareKit();
-      if (module) {
-        this.careKit = module;
-      }
+    const careKitModule = await loadCareKit();
+    if (careKitModule) {
+      this.careKit = careKitModule;
     }
   }
 
-  public async getBiometricData(): Promise<BiometricData> {
+  public async getBiometricData(): Promise<BiometricData | null> {
     if (!this.careKit) {
-      throw new Error('HealthKit not initialized');
+      console.log('HealthKit is not available');
+      return null;
     }
 
-    return {
-      heartRate: await this.careKit.getHeartRate(),
-      bloodOxygen: await this.careKit.getBloodOxygen(),
-      ecg: await this.careKit.getECGData()
-    };
+    try {
+      // Example implementation - replace with actual HealthKit data retrieval
+      return {
+        steps: 10000,
+        heartRate: 75
+      };
+    } catch (error) {
+      console.error('Error getting biometric data:', error);
+      return null;
+    }
   }
 
   // Mock HealthKit authorization

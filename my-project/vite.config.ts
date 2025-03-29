@@ -4,8 +4,11 @@ import { fileURLToPath } from 'url';
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/',
+  base: '/Vite_React_Supabase/',
   plugins: [react()],
+  build: {
+    target: 'esnext',
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
