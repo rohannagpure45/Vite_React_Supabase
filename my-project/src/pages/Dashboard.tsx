@@ -10,8 +10,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-
-
 interface BiometricData {
   heartRate?: number;
   bloodOxygen?: number;
@@ -59,27 +57,16 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    async function init() {
-      await healthKitManager.requestAuthorization();
-      const data = await healthKitManager.getLatestBiometrics();
-      setBiometrics(data);
-      setIsLoading(false);
-    }
-    init();
-  }, []);
-
-  useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatLog]);
 
   const sendMessage = async () => {
     if (!userInput.trim()) return;
-  
     setLoading(true);
     const updatedLog = [...chatLog, { role: 'user', content: userInput }];
     setChatLog(updatedLog);
     setUserInput('');
-  
+
     try {
       const response = await gptHealthService.getChatResponse(updatedLog, userLocation);
       setChatLog((prev) => [...prev, { role: 'assistant', content: response }]);
@@ -90,7 +77,6 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
-  
 
   if (isLoading) {
     return (
@@ -154,14 +140,12 @@ export default function Dashboard() {
                       exit={{ opacity: 0 }}
                       className={`mb-3 flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div className={`rounded-lg px-3 py-2 ${msg.role === 'user' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                      {msg.role === 'assistant' ? (
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {msg.content}
-                        </ReactMarkdown>
-                      ) : (
-                        msg.content
-                      )}
+                      <div className={`rounded-lg px-3 py-2 max-w-[80%] whitespace-pre-wrap ${msg.role === 'user' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                        {msg.role === 'assistant' ? (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                        ) : (
+                          msg.content
+                        )}
                       </div>
                     </motion.div>
                   ))}
@@ -175,7 +159,9 @@ export default function Dashboard() {
                   onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                   placeholder="Describe your symptoms..."
                 />
-                <Button onClick={sendMessage} disabled={loading}><Send className="h-4 w-4" /></Button>
+                <Button onClick={sendMessage} disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">
+                  <Send className="h-4 w-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>
