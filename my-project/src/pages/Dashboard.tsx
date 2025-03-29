@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React,{ useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { healthKitManager } from '../services/healthKit';
 import { gptHealthService } from '../services/gpt';

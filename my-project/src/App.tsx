@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ResetPassword from './pages/ResetPassword';
+import React from 'react';
+import './App.css'; // Ensure this path is correct
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
