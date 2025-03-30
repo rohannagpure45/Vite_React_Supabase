@@ -38,22 +38,29 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <input
+              id="email"
+              name="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
               className="w-full p-2 border rounded"
               required
+              autoComplete="email"
             />
           </div>
+
           <div>
             <input
+              id="password"
+              name="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
               className="w-full p-2 border rounded"
               required
+              autoComplete="current-password"
             />
           </div>
           {error && (

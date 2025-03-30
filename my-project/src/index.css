@@ -80,6 +80,12 @@
   }
 }
 
+a {
+  color: #2563eb; /* Tailwind blue-600 */
+  font-weight: bold;
+  text-decoration: underline;
+}
+
 @layer components {
   /* Add your component styles here */
 }

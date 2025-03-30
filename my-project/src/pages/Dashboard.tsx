@@ -8,6 +8,7 @@ import { Loader2, Activity, Heart, Brain, Send } from "lucide-react";
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Loader } from '@googlemaps/js-api-loader';
 
 interface BiometricData {
   heartRate?: number;
@@ -26,39 +27,65 @@ export default function Dashboard() {
     role: 'assistant',
     content: 'Hello! How can I assist you with your health concerns today?'
   }]);
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const [userInput, setUserInput] = useState('');
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(`orthopedic clinic near ${userLocation}`)}`;
+  const defaultBiometrics = {
+    heartRate: 75,
+    bloodOxygen: 98,
+    ecg: { status: 'unavailable', timestamp: '' },
+  };
 
   const { user, signOut } = useAuth();
 
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation(`${latitude}, ${longitude}`);
-        },
-        () => {
-          console.warn('Geolocation permission denied or unavailable.');
-        }
-      );
-    }
-
-    const requestAuth = async () => {
+    async function init() {
+      // Get user location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            setUserLocation(`${latitude}, ${longitude}`);
+          },
+          () => {
+            console.warn('Geolocation permission denied or unavailable.');
+          }
+        );
+      }
+      
       try {
         await new Promise((res) => setTimeout(res, 1000));
-        setBiometrics(mockBiometricData);
+        setBiometrics(mockBiometricData || defaultBiometrics);
       } catch (err) {
         console.error("Failed to load mock biometrics:", err);
       } finally {
         setIsLoading(false);
       }
-    };
-
-    requestAuth();
+    }
+  
+    init();
   }, []);
+
+  useEffect(() => {
+    if (!userLocation || !apiKey) return;
+  
+    const loader = new Loader({
+      apiKey,
+      version: 'weekly',
+      libraries: ['places'],
+    });
+  
+    loader.load().then(() => {
+      console.log("Google Maps API loaded");
+      // Optional: Store google maps object or use autocomplete, geocoder, etc.
+    }).catch(err => {
+      console.error("Maps API failed to load", err);
+    });
+  }, [userLocation, apiKey]);
+
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -79,7 +106,7 @@ export default function Dashboard() {
     setUserInput('');
 
     try {
-      const response = await gptHealthService.getChatResponse(updatedLog, userLocation, biometrics);
+      const response = await gptHealthService.getChatResponse(updatedLog, userLocation, biometrics, mapsUrl);
       setChatLog((prev) => [...prev, { role: 'assistant', content: response }]);
     } catch (error) {
       console.error(error);
@@ -88,6 +115,11 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+
+  if (!userLocation) {
+    return <div className="text-center mt-6">Getting your location...</div>;
+  }
+  
 
   if (isLoading) {
     return (
@@ -118,19 +150,38 @@ export default function Dashboard() {
                 <AnimatePresence>
                   {chatLog.map((msg, i) => (
                     <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className={`mb-3 flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={`mb-3 flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`rounded-xl p-3 max-w-[80%] shadow whitespace-pre-wrap ${
+                        msg.role === 'user'
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-white text-gray-800 border'
+                      }`}
                     >
-                      <div className={`rounded-lg px-3 py-2 max-w-[80%] whitespace-pre-wrap ${msg.role === 'user' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                        {msg.role === 'assistant'
-                          ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-                          : msg.content
-                        }
+                      {msg.role === 'assistant' ? (
+                        <div className="prose prose-sm max-w-none">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            a: ({ node, ...props }) => (
+                              <a {...props} className="text-blue-600 underline font-bold" />
+                            ),
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
                       </div>
-                    </motion.div>
+                      
+                      ) : (
+                        msg.content
+                      )}
+                    </div>
+                  </motion.div> 
                   ))}
                   <div ref={chatEndRef} />
                 </AnimatePresence>
@@ -138,21 +189,25 @@ export default function Dashboard() {
 
               {/* Input Area */}
               <div className="flex gap-2 items-end">
-                <textarea
-                  ref={textareaRef}
-                  value={userInput}
-                  onChange={(e) => setUserInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      sendMessage();
-                    }
-                  }}
-                  placeholder="Describe your symptoms..."
-                  rows={1}
-                  className="flex-1 resize-none overflow-hidden rounded-md border px-3 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition max-h-40"
-                  style={{ minHeight: '2.5rem' }}
-                />
+              <textarea
+                id="symptom-input"
+                name="symptom"
+                ref={textareaRef}
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+                placeholder="Describe your symptoms..."
+                rows={1}
+                className="flex-1 resize-none overflow-hidden rounded-md border px-3 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition max-h-40"
+                style={{ minHeight: '2.5rem' }}
+              />
+
+
                 <Button onClick={sendMessage} disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">
                   <Send className="h-4 w-4" />
                 </Button>
@@ -170,7 +225,7 @@ export default function Dashboard() {
                 <Heart className="text-red-500 mr-3" />
                 <div>
                   <div className="text-sm font-medium text-gray-600">Heart Rate</div>
-                  <div className="text-lg font-bold">{biometrics.heartRate || 'N/A'}</div>
+                  <div className="text-lg font-bold">{biometrics.heartRate ?? 'N/A'}</div>
                 </div>
               </div>
               <div className="flex items-center p-4 bg-white rounded-lg shadow">
