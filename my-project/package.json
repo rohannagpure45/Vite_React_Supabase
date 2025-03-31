@@ -13,6 +13,7 @@
     "build:prod": "npm run clean && npm run build"
   },
   "dependencies": {
+    "@googlemaps/js-api-loader": "^1.16.8",
     "@radix-ui/react-label": "^2.0.0",
     "@radix-ui/react-slot": "^1.0.0",
     "@supabase/supabase-js": "^2.39.0",
