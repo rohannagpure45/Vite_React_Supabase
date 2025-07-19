@@ -1,54 +1,133 @@
-# React + TypeScript + Vite
+# Health Assistant - Firebase Migration
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project has been migrated from Supabase to Firebase! 
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 🔥 **Firebase Authentication** - Email/password authentication with Firebase Auth
+- 💬 **AI Health Assistant** - GPT-powered health consultation chat
+- 📱 **Biometric Integration** - Mock biometric data display
+- 🗺️ **Location Services** - Google Maps integration for finding healthcare providers
+- 🎨 **Modern UI** - Built with Tailwind CSS and Shadcn UI
+- ⚡ **Vite + React** - Fast development and optimized builds
 
-## Expanding the ESLint configuration
+## Firebase Setup
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 1. Create a Firebase Project
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Click "Create a project"
+3. Follow the setup wizard
+
+### 2. Enable Authentication
+
+1. In your Firebase console, go to **Authentication**
+2. Click **Get started**
+3. Go to **Sign-in method** tab
+4. Enable **Email/Password** authentication
+
+### 3. Create Firestore Database
+
+1. Go to **Firestore Database**
+2. Click **Create database**
+3. Start in **test mode** (you can configure security rules later)
+4. Choose a location for your database
+
+### 4. Get Firebase Configuration
+
+1. Go to **Project Settings** (gear icon)
+2. In the **General** tab, scroll down to "Your apps"
+3. Click the web icon `</>` to add a web app
+4. Register your app and copy the configuration object
+
+### 5. Environment Variables
+
+Create a `.env` file in the project root with your Firebase config:
+
+```env
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_firebase_app_id
+
+# Other API Keys (optional)
+VITE_OPENAI_API_KEY=your_openai_api_key
+VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+VITE_ENABLE_HEALTHKIT=false
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Installation & Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# Install dependencies
+npm install
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
 ```
+
+## Project Structure
+
+```
+src/
+├── components/ui/          # Shadcn UI components
+├── contexts/
+│   └── AuthContext.tsx    # Firebase Authentication context
+├── lib/
+│   └── firebase.ts        # Firebase configuration
+├── pages/
+│   ├── Dashboard.tsx      # Main dashboard with health chat
+│   ├── Login.tsx          # Login page
+│   ├── Register.tsx       # Registration page
+│   ├── ResetPassword.tsx  # Password reset
+│   └── Home.tsx           # Landing page
+├── services/
+│   ├── gpt.ts            # OpenAI GPT integration
+│   ├── healthKit.ts      # Mock health data
+│   └── mockBiometrics.ts # Sample biometric data
+└── App.tsx                # Main app with routing
+```
+
+## What Changed in Migration
+
+### From Supabase to Firebase:
+- ✅ Authentication migrated to Firebase Auth
+- ✅ Ready for Firestore database (schema can be implemented as needed)
+- ✅ Error handling updated for Firebase Auth errors
+- ✅ Environment variables updated
+- ✅ All Supabase dependencies removed
+
+### Firebase Services Available:
+- **Firebase Auth** - User authentication
+- **Firestore** - NoSQL database (ready to use)
+- **Firebase Storage** - File storage (if needed)
+- **Firebase Hosting** - Easy deployment
+
+## Deployment
+
+You can easily deploy this to Firebase Hosting:
+
+```bash
+# Install Firebase CLI
+npm install -g firebase-tools
+
+# Login to Firebase
+firebase login
+
+# Initialize Firebase in your project
+firebase init
+
+# Build and deploy
+npm run build
+firebase deploy
+```
+
+## License
+
+This project is for educational purposes.

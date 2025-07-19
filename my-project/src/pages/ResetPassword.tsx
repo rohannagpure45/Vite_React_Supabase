@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { FirebaseError } from 'firebase/app';
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import {
@@ -28,8 +29,15 @@ export default function ResetPassword() {
     try {
       await resetPassword(email);
       setMessage('Check your email for a password reset link');
-    } catch (error: any) {
-      setError(error.message || 'Failed to send reset email');
+    } catch (error) {
+      const firebaseError = error as FirebaseError;
+      if (firebaseError.code === 'auth/user-not-found') {
+        setError('No account found with this email address.');
+      } else if (firebaseError.code === 'auth/invalid-email') {
+        setError('Please enter a valid email address.');
+      } else {
+        setError(firebaseError.message || 'Failed to send reset email. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
