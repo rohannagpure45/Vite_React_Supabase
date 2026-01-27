@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { 
+import {
   User,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -7,12 +7,15 @@ import {
   sendPasswordResetEmail,
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
 interface AuthContextType {
   user: User | null;
+  loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -30,12 +33,24 @@ export const useAuth = () => {
   return context;
 };
 
+const googleProvider = new GoogleAuthProvider();
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check for redirect result on app initialization
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          setUser(result.user);
+        }
+      })
+      .catch((error) => {
+        console.error('Redirect sign-in error:', error);
+      });
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -55,9 +70,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    setUser(result.user);
+    try {
+      // Try popup first (faster UX)
+      const result = await signInWithPopup(auth, googleProvider);
+      setUser(result.user);
+    } catch (error: unknown) {
+      const firebaseError = error as { code?: string };
+      // If popup is blocked, fall back to redirect
+      if (firebaseError.code === 'auth/popup-blocked' ||
+        firebaseError.code === 'auth/popup-closed-by-user') {
+        // Use redirect as fallback
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        throw error;
+      }
+    }
   };
 
   const signOut = async () => {
@@ -71,6 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const value = {
     user,
+    loading,
     signIn,
     signUp,
     signInWithGoogle,

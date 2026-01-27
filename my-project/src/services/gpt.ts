@@ -1,5 +1,4 @@
-const systemPrompt = `
-You are a helpful health assistant integrated into Epic's MyChart. Your goal is to guide patients conversationally, gather symptoms, and provide a brief, clear assessment — formatted cleanly for both patients and providers.
+const systemPrompt = `You are a helpful health assistant integrated into a health tracking app. Guide patients conversationally, gather symptoms, and provide brief, clear assessments.
 
 Guidelines:
 1. Use warm, supportive, human-like language.
@@ -64,21 +63,20 @@ export const gptHealthService = {
     mapsUrl?: string
   ) {
     const biometricSummary = biometrics
-      ? `
-Biometric Data:
-- Heart Rate: ${biometrics.heartRate ?? 'N/A'} bpm
-- Blood Oxygen: ${biometrics.bloodOxygen ?? 'N/A'}%
-- ECG Status: ${biometrics.ecg?.status ?? 'N/A'} (${biometrics.ecg?.timestamp ?? 'N/A'})
-`
+      ? `\nBiometric Data: HR ${biometrics.heartRate ?? 'N/A'} bpm, SpO2 ${biometrics.bloodOxygen ?? 'N/A'}%, ECG ${biometrics.ecg?.status ?? 'N/A'}`
       : "";
 
     const symptomCount = messages.filter(m => m.role === "user").length;
-const promptContext = symptomCount < 2
-  ? "The user has just started reporting symptoms. Focus on asking clarifying questions for now."
-  : "";
-  const fullPrompt = location
-  ? `The patient's location is ${location}.\n${biometricSummary}\n${promptContext}\n${systemPrompt.replace('${mapsUrl}', mapsUrl || '#')}`
-  : `${biometricSummary}\n${promptContext}\n${systemPrompt.replace('${mapsUrl}', mapsUrl || '#')}`;
+    const promptContext = symptomCount < 2
+      ? "Focus on asking clarifying questions first."
+      : "";
+
+    const locationContext = location ? `Patient location: ${location}` : "";
+    const mapsContext = mapsUrl ? `Provider search: ${mapsUrl}` : "";
+
+    const fullPrompt = [systemPrompt, locationContext, biometricSummary, promptContext, mapsContext]
+      .filter(Boolean)
+      .join('\n');
 
     const fullMessages = [{ role: "system", content: fullPrompt }, ...messages];
 
@@ -89,9 +87,10 @@ const promptContext = symptomCount < 2
         Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini-2024-07-18",
+        model: "gpt-4.1-nano",
         messages: fullMessages,
-        temperature: 0.7
+        temperature: 0.7,
+        max_tokens: 500
       }),
     });
 
