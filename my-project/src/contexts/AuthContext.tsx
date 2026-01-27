@@ -77,11 +77,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error: unknown) {
       const firebaseError = error as { code?: string };
       // If popup is blocked, fall back to redirect
-      if (firebaseError.code === 'auth/popup-blocked' ||
-        firebaseError.code === 'auth/popup-closed-by-user') {
-        // Use redirect as fallback
+      if (firebaseError.code === 'auth/popup-blocked') {
+        // Use redirect as fallback only for blocked popups
         await signInWithRedirect(auth, googleProvider);
       } else {
+        // For cancelled popups or other errors, re-throw so Login page can handle
         throw error;
       }
     }
